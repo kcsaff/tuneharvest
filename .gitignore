@@ -1,0 +1,7 @@
+token-from-slack.txt
+secrets-to-youtube.json
+/*venv
+/.git
+/.idea
+*.pyc
+*oauth*.json
