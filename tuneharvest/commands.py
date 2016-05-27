@@ -83,6 +83,14 @@ to_youtube_parser.add_argument(
     '--limit', '-L', default=200, type=int,
     help='Max number of items in playlist'
 )
+to_youtube_parser.add_argument(
+    '--reverse', default=False, type=bool,
+    help='Whether to reverse link order'
+)
+to_youtube_parser.add_argument(
+    '-v', '--verbose', action='count', default=0,
+    help='Verbosity'
+)
 
 
 def main(argv=None):
@@ -122,3 +130,6 @@ def main(argv=None):
 
     iter_source_links = (massage(link) for args in source_args for link in args.action(args))
     sink_args.action(sink_args, iter_source_links)
+
+if __name__ == '__main__':
+    main()

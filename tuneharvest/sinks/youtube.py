@@ -4,6 +4,7 @@ import os
 import sys
 import itertools
 import json
+from warnings import warn
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -18,6 +19,9 @@ PLAYLIST_ITEMS_MAX = 50
 
 
 PlaylistItem = namedtuple('PlaylistItem', ('itemid', 'deleteid'))
+
+
+debug = lambda *_: None
 
 
 def _client(secrets):
@@ -61,7 +65,7 @@ def get_or_create_playlist(youtube, title, description, privacy='unlisted'):
         part='snippet',
         mine=True,
     ).execute()['items']:
-        print(playlist)
+        debug(playlist)
         this_title = playlist['snippet']['title'].lower().strip()
         if this_title == desired_title:
             return playlist['id']
@@ -78,7 +82,7 @@ def iter_playlist_items(youtube, playlist_id):
     while request:
         response = request.execute()
         for video in response['items']:
-            print(video)
+            debug(video)
             video_id = video['snippet']['resourceId']['videoId']
             delete_id = video['id']
             yield PlaylistItem(video_id, delete_id)
@@ -95,9 +99,7 @@ _ACCEPTABLE_FAILURES = {
 
 def update_playlist(youtube, playlist_id, links):
     old_items = list(iter_playlist_items(youtube, playlist_id))
-    #print('Got old items: {}'.format(old_items))
     new_items = list(links)
-    #print('Got new items: {}'.format(new_items))
 
     def are_equal(new_item, old_item):
         return new_item.itemid == old_item.itemid
@@ -109,17 +111,17 @@ def update_playlist(youtube, playlist_id, links):
             try:
                 return fun(*args, **kwargs)
             except HttpError as err:
-                print(err)
-                print(err.args)
+                debug(err)
+                debug(err.args)
 
                 status = int(err.args[0]['status'])
                 try:
                     data = json.loads(err.args[1].decode())
                 except:
-                    print('Could not interpret body {}'.format(err.args[1]))
+                    warn('Could not interpret body {}'.format(err.args[1]))
                     raise err
                 else:
-                    print(data)
+                    debug(data)
                     reasons = {(status, d['reason']) for d in data['error']['errors']}
                     if reasons & _ACCEPTABLE_FAILURES:
                         return FAILURE
@@ -128,7 +130,7 @@ def update_playlist(youtube, playlist_id, links):
 
     @handle_http_errors
     def do_insert(position, new_item):
-        print('Inserting at {}: {}'.format(position, new_item))
+        debug('Inserting at {}: {}'.format(position, new_item))
         youtube.playlistItems().insert(
             part='snippet,contentDetails',
             body=dict(
@@ -148,7 +150,7 @@ def update_playlist(youtube, playlist_id, links):
 
     @handle_http_errors
     def do_append(new_item):
-        print('Appending: {}'.format(new_item))
+        debug('Appending: {}'.format(new_item))
         youtube.playlistItems().insert(
             part='snippet,contentDetails',
             body=dict(
@@ -167,7 +169,7 @@ def update_playlist(youtube, playlist_id, links):
 
     @handle_http_errors
     def do_delete(position, old_item):
-        print('Deleting from {}: {}'.format(position, old_item))
+        debug('Deleting from {}: {}'.format(position, old_item))
         youtube.playlistItems().delete(
             id=old_item.deleteid,
         ).execute()
@@ -180,6 +182,11 @@ def update_playlist(youtube, playlist_id, links):
 
 
 def to_youtube(args, links):
+    global debug
+    if args.verbose >= 2:
+        debug = print
+    else:
+        debug = lambda *_: None
     youtube = _client(args.secrets)
 
     if args.id:
@@ -192,15 +199,19 @@ def to_youtube(args, links):
         raise RuntimeError('Require either playlist ID or title')
 
     # Filter links to just those desired, using iterator ops
-    print('Ready to filter youtube')
+    debug('Ready to filter youtube')
     links = (link for link in links if link.service == 'youtube' and link.itemid)
-    print('Ready to get unique items')
+    debug('Ready to get unique items')
     links = unique(links, lambda link: link.itemid)
     if args.limit > 0:
-        print('Ready to get limited items ({})'.format(args.limit))
+        debug('Ready to get limited items ({})'.format(args.limit))
         links = itertools.islice(links, 0, args.limit)
+    links = list(links)
 
-    print('Ready to update playlist')
+    if args.reverse:
+        links.reverse()
+
+    debug('Ready to update playlist')
     update_playlist(youtube, playlist_id, links)
 
 
