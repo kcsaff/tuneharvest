@@ -59,7 +59,7 @@ to_console_parser.add_argument(
     help='Format to write to console'
 )
 to_console_parser.add_argument(
-    '--limit', 'L', default=None, type=int,
+    '--limit', '-L', default=None, type=int,
     help='Max items to print'
 )
 
