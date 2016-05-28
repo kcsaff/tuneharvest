@@ -1,4 +1,5 @@
 from urllib.parse import urlparse, parse_qs
+from tuneharvest.common import Link
 
 
 class Masseuse(object):
@@ -9,7 +10,7 @@ class Masseuse(object):
         'play.spotify.com': 'spotify',
     }
 
-    def massage(self, link):
+    def massage(self, link: Link)-> Link:
         if link.media and not link.service:
             parsed_link = urlparse(link.media)
             service = self.SERVICE_NETLOCS.get(parsed_link.netloc)
@@ -23,7 +24,7 @@ class Masseuse(object):
 
         return link
 
-    def massage_youtube(self, link):
+    def massage_youtube(self, link: Link)-> Link:
         if link.media and not link.itemid:
             parsed_link = urlparse(link.media)
             qs = parse_qs(parsed_link.query)
@@ -33,7 +34,7 @@ class Masseuse(object):
                 link = link._replace(itemid=parsed_link.path.split('/')[-1])
         return link
 
-    def massage_spotify(self, link):
+    def massage_spotify(self, link: Link)-> Link:
         if link.media and not link.itemid:
             parsed_link = urlparse(link.media)
             parts = parsed_link.path.split('/')

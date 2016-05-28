@@ -58,6 +58,10 @@ to_console_parser.add_argument(
     '--format', '-F', default='{media}',
     help='Format to write to console'
 )
+to_console_parser.add_argument(
+    '--limit', 'L', default=None, type=int,
+    help='Max items to print'
+)
 
 
 to_youtube_parser = to_subparsers.add_parser('youtube', help='Update a youtube playlist')
@@ -84,7 +88,7 @@ to_youtube_parser.add_argument(
     help='Max number of items in playlist'
 )
 to_youtube_parser.add_argument(
-    '--reverse', default=False, type=bool,
+    '--reverse', action='store_true',
     help='Whether to reverse link order'
 )
 to_youtube_parser.add_argument(

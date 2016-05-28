@@ -2,8 +2,11 @@ import itertools
 from tuneharvest.common import Link
 from slacker import Slacker
 
+from collections.abc import Callable, Iterable
+from argparse import Namespace
 
-def _lookup(result, path, default=None):
+
+def _lookup(result: dict, path: str, default=None):
     for part in path.split('.'):
         if part in result:
             result = result[part]
@@ -12,7 +15,7 @@ def _lookup(result, path, default=None):
     return result
 
 
-def _paging(contents, paging, method, *args, **kwargs):
+def _paging(contents: str, paging: str, method: Callable, *args, **kwargs)-> Iterable:
     for page in itertools.count(kwargs.get('page', 1)):
         kwargs.update(page=page)
         body = method(*args, **kwargs).body
@@ -23,7 +26,7 @@ def _paging(contents, paging, method, *args, **kwargs):
             break
 
 
-def from_slack(args):
+def from_slack(args: Namespace)-> Iterable:
     token = open(args.token, 'r').read().strip()
     slack = Slacker(token)
 

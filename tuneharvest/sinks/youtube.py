@@ -1,10 +1,12 @@
 from collections import namedtuple
 import httplib2
-import os
 import sys
 import itertools
 import json
 from warnings import warn
+
+from collections.abc import Callable, Iterable
+from argparse import Namespace
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -12,6 +14,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
 
+from tuneharvest.common import Link
 from tuneharvest.utils import unique, make_lists_equal
 
 
@@ -21,10 +24,14 @@ PLAYLIST_ITEMS_MAX = 50
 PlaylistItem = namedtuple('PlaylistItem', ('itemid', 'deleteid'))
 
 
-debug = lambda *_: None
+def _ignore(*_):
+    pass
 
 
-def _client(secrets):
+debug = _ignore
+
+
+def _client(secrets: str):
     flow = flow_from_clientsecrets(
         secrets,
         message='Missing secrets!', scope='https://www.googleapis.com/auth/youtube'
@@ -43,7 +50,7 @@ def _client(secrets):
     return youtube
 
 
-def create_playlist(youtube, title, description, privacy='unlisted'):
+def create_playlist(youtube, title: str, description: str, privacy: str = 'unlisted')-> str:
     playlists_insert_response = youtube.playlists().insert(
         part='snippet,status',
         body=dict(
@@ -59,13 +66,12 @@ def create_playlist(youtube, title, description, privacy='unlisted'):
     return playlists_insert_response['id']
 
 
-def get_or_create_playlist(youtube, title, description, privacy='unlisted'):
+def get_or_create_playlist(youtube, title: str, description: str, privacy: str = 'unlisted')-> str:
     desired_title = title.lower().strip()
     for playlist in youtube.playlists().list(
         part='snippet',
         mine=True,
     ).execute()['items']:
-        debug(playlist)
         this_title = playlist['snippet']['title'].lower().strip()
         if this_title == desired_title:
             return playlist['id']
@@ -73,7 +79,7 @@ def get_or_create_playlist(youtube, title, description, privacy='unlisted'):
         return create_playlist(youtube, title, description, privacy=privacy)
 
 
-def iter_playlist_items(youtube, playlist_id):
+def iter_playlist_items(youtube, playlist_id: str)-> Iterable:
     request = youtube.playlistItems().list(
         playlistId=playlist_id,
         part='snippet',
@@ -97,23 +103,19 @@ _ACCEPTABLE_FAILURES = {
 }
 
 
-def update_playlist(youtube, playlist_id, links):
+def update_playlist(youtube, playlist_id: str, links: Iterable):
     old_items = list(iter_playlist_items(youtube, playlist_id))
     new_items = list(links)
 
-    def are_equal(new_item, old_item):
+    def are_equal(new_item: Link, old_item: PlaylistItem)-> bool:
         return new_item.itemid == old_item.itemid
 
-    FAILURE = object()
-
-    def handle_http_errors(fun):
+    # Making callbacks that will be used in a call to ``make_lists_equal``
+    def handle_http_errors(fun: Callable):
         def do_it(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
             except HttpError as err:
-                debug(err)
-                debug(err.args)
-
                 status = int(err.args[0]['status'])
                 try:
                     data = json.loads(err.args[1].decode())
@@ -124,12 +126,14 @@ def update_playlist(youtube, playlist_id, links):
                     debug(data)
                     reasons = {(status, d['reason']) for d in data['error']['errors']}
                     if reasons & _ACCEPTABLE_FAILURES:
-                        return FAILURE
+                        return _FAILURE
+                    debug(err)
+                    debug(err.args)
                 raise
         return do_it
 
     @handle_http_errors
-    def do_insert(position, new_item):
+    def do_insert(position: int, new_item: Link):
         debug('Inserting at {}: {}'.format(position, new_item))
         youtube.playlistItems().insert(
             part='snippet,contentDetails',
@@ -149,7 +153,7 @@ def update_playlist(youtube, playlist_id, links):
         ).execute()
 
     @handle_http_errors
-    def do_append(new_item):
+    def do_append(new_item: Link):
         debug('Appending: {}'.format(new_item))
         youtube.playlistItems().insert(
             part='snippet,contentDetails',
@@ -168,7 +172,7 @@ def update_playlist(youtube, playlist_id, links):
         ).execute()
 
     @handle_http_errors
-    def do_delete(position, old_item):
+    def do_delete(position, old_item: PlaylistItem):
         debug('Deleting from {}: {}'.format(position, old_item))
         youtube.playlistItems().delete(
             id=old_item.deleteid,
@@ -178,22 +182,21 @@ def update_playlist(youtube, playlist_id, links):
         new_items, old_items,
         equals=are_equal,
         insert=do_insert, append=do_append, delete=do_delete,
+        failure=_FAILURE,
     )
 
 
-def to_youtube(args, links):
+def to_youtube(args: Namespace, links: Iterable):
     global debug
-    if args.verbose >= 2:
-        debug = print
-    else:
-        debug = lambda *_: None
+    debug = print if args.verbose >= 2 else _ignore
+
     youtube = _client(args.secrets)
 
     if args.id:
         playlist_id = args.id
     elif args.title:
         playlist_id = get_or_create_playlist(
-            youtube, args.title, 'Generated playlist {}'.format(args.title), args.privacy
+            youtube, args.title, 'Tuneharvested playlist {}'.format(args.title), args.privacy
         )
     else:
         raise RuntimeError('Require either playlist ID or title')

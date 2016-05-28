@@ -1,4 +1,5 @@
 from collections import namedtuple
+from collections.abc import Callable, Iterable, Sequence
 import operator
 
 
@@ -13,13 +14,13 @@ class LcsEmptyNode(object):
         return None
 
     @property
-    def length(self):
+    def length(self)-> int:
         return 0
 
-    def __bool__(self):
+    def __bool__(self)-> bool:
         return False
 
-    def iter_reversed(self):
+    def iter_reversed(self)-> Iterable:
         return ()
 
 LcsEmptyNode.INSTANCE = LcsEmptyNode()
@@ -41,14 +42,14 @@ class LcsNode(object):
                 best = parent
         return best
 
-    def iter_reversed(self):
+    def iter_reversed(self)-> Iterable:
         node = self
         while node:
             yield node.value
             node = node.parent
 
 
-def longest_common_subsequence(a, b, equals=operator.eq):
+def longest_common_subsequence(a: Sequence, b: Sequence, equals: Callable = operator.eq)-> Sequence:
     """Longest common subsequence of two sequences
 
     Finds the longest common subsequence of sequences ``a`` and ``b``,
@@ -56,6 +57,7 @@ def longest_common_subsequence(a, b, equals=operator.eq):
 
     :param a: First sequence
     :param b: Second sequence
+    :param equals: Test to determine if an element from sequence a equals an element from sequence b
     :return: List of pairs of indices to equal elements
 
     >>> longest_common_subsequence(
@@ -78,11 +80,16 @@ def longest_common_subsequence(a, b, equals=operator.eq):
     return best
 
 
+FAILURE = object()
+
+
 def make_lists_equal(
-        goal, current,
-        equals=operator.eq,
-        insert=None, delete=None, append=None,
-        failure={},
+        goal: Sequence, current: Sequence,
+        equals: Callable = operator.eq,
+        insert: Callable = None,
+        delete: Callable = None,
+        append: Callable = None,
+        failure=FAILURE,
 ):
     """Attempts to make two lists equal by performing the minimal number of operations.
 
@@ -97,6 +104,7 @@ def make_lists_equal(
     :param insert: (index, a value) -> inserts into b
     :param delete: (index, b value) -> deletes from b
     :param append: (a value) -> appends to end of b
+    :param failure: arbitrary object returned when a callback failed
 
     >>> a = [1, 2, 3,    5, 6,    8, 9,]
     >>> b = [   2, 3, 4, 5,    7, 8,   ]
@@ -139,7 +147,7 @@ def make_lists_equal(
             len_b += 1
 
 
-def unique(objs, key=None):
+def unique(objs: Iterable, key: Callable = None)-> Iterable:
     """Yields unique values from an iterable."""
     hashable_objs = set()
     unhashable_objs = list()
