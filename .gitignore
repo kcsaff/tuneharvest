@@ -5,3 +5,4 @@ secrets-to-youtube.json
 /.idea
 *.pyc
 *oauth*.json
+run.sh
