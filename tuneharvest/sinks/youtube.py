@@ -3,6 +3,7 @@ import httplib2
 import sys
 import itertools
 import json
+import os
 from warnings import warn
 
 from collections.abc import Callable, Iterable
@@ -36,12 +37,14 @@ def _client(secrets: str):
         secrets,
         message='Missing secrets!', scope='https://www.googleapis.com/auth/youtube'
     )
-    storage = Storage('%s-oauth2.json' % sys.argv[0])
+    keys_dirname = os.path.dirname(os.path.abspath(secrets))
+    storage_filename = os.path.join((keys_dirname, '{}-oauth2.json'.format(sys.argv[0])))
+    storage = Storage(storage_filename)
     credentials = storage.get()
 
     if credentials is None or credentials.invalid:
-      flags = argparser.parse_args(args=[])
-      credentials = run_flow(flow, storage, flags)
+        flags = argparser.parse_args(args=[])
+        credentials = run_flow(flow, storage, flags)
 
     youtube = build(
         'youtube', 'v3',

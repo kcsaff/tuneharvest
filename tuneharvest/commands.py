@@ -31,7 +31,7 @@ from_slack_parser = from_subparsers.add_parser('slack', help='Read links based o
 from_slack_parser.set_defaults(action=from_slack)
 
 from_slack_parser.add_argument(
-    '--token', '-t', default='token-from-slack.txt',
+    '--token', '-t', default='keys/token-from-slack.txt',
     help='Slack API token or filename containing API token'
 )
 from_slack_parser.add_argument(
@@ -68,7 +68,7 @@ to_youtube_parser = to_subparsers.add_parser('youtube', help='Update a youtube p
 to_youtube_parser.set_defaults(action=to_youtube)
 
 to_youtube_parser.add_argument(
-    '--secrets', '-S', default='secrets-to-youtube.json',
+    '--secrets', '-S', default='keys/secrets-to-youtube.json',
     help='JSON client secrets file'
 )
 to_youtube_parser.add_argument(

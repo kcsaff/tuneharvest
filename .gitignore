@@ -1,8 +1,6 @@
-token-from-slack.txt
-secrets-to-youtube.json
+/keys
 /*venv
 /.git
 /.idea
 *.pyc
-*oauth*.json
 run.sh
