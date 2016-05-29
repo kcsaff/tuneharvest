@@ -8,9 +8,22 @@ from tuneharvest.sinks.youtube import to_youtube
 from tuneharvest.filters import Masseuse
 
 
+import pkg_resources
+try:
+    VERSION = pkg_resources.require("tuneharvest")[0].version
+except:
+    VERSION = 'DEV'
+
+
 parser = argparse.ArgumentParser(
-    'tuneharvest',
-    description='Can harvest youtube music links from a slack conversation for posting in a youtube playlist.'
+    description=('Harvests youtube music links from a slack conversation' +
+                 ' for posting in a youtube playlist\n' +
+                 '  Version {}').format(VERSION),
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+parser.add_argument(
+    '--version', action='store_true',
+    help='Print version ({}) and exit'.format(VERSION)
 )
 
 subparsers = parser.add_subparsers()
@@ -109,8 +122,12 @@ def main(argv=None):
     commands.append(sys.argv[prev:])
 
     if not commands[-1]:
-        parser.parse_args()
-        raise RuntimeError('At least one `from` or `to` command is required.')
+        args = parser.parse_args()
+        if args.version:
+            print(VERSION)
+            return
+        else:
+            raise RuntimeError('At least one `from` or `to` command is required.')
 
     sources = list()
     sink = None
