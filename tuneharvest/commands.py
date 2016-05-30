@@ -18,7 +18,8 @@ except:
 parser = argparse.ArgumentParser(
     description=('Harvests youtube music links from a slack conversation' +
                  ' for posting in a youtube playlist\n' +
-                 '  Version {}').format(VERSION),
+                 '  Version {}'
+                 ).format(VERSION),
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 parser.add_argument(
