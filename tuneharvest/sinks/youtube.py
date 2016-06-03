@@ -38,7 +38,7 @@ def _client(secrets: str):
         message='Missing secrets!', scope='https://www.googleapis.com/auth/youtube'
     )
     keys_dirname = os.path.dirname(os.path.abspath(secrets))
-    storage_filename = os.path.join((keys_dirname, '{}-oauth2.json'.format(sys.argv[0])))
+    storage_filename = os.path.join(keys_dirname, '{}-oauth2.json'.format(sys.argv[0]))
     storage = Storage(storage_filename)
     credentials = storage.get()
 
