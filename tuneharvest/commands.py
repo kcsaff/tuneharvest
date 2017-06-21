@@ -3,6 +3,7 @@ import sys
 
 from tuneharvest.sources.console import from_console
 from tuneharvest.sources.slack import from_slack
+from tuneharvest.sources.url import from_url
 from tuneharvest.sinks.console import to_console
 from tuneharvest.sinks.youtube import to_youtube
 from tuneharvest.filters import Masseuse
@@ -31,6 +32,7 @@ subparsers = parser.add_subparsers()
 
 from_parser = subparsers.add_parser('from', help='Read music links from a location')
 from_subparsers = from_parser.add_subparsers()
+
 
 from_console_parser = from_subparsers.add_parser('console', help='Read links line by line from stdin')
 from_console_parser.set_defaults(action=from_console)
@@ -62,8 +64,19 @@ from_slack_parser.add_argument(
 )
 
 
+from_url_parser = from_subparsers.add_parser('url', help='Read links from a url')
+from_url_parser.set_defaults(action=from_url)
+
+from_url_parser.add_argument('url', help='URL of the web page to load')
+from_url_parser.add_argument(
+    '--lazyyt', action='store_true',
+    help='Search for lazyYT youtube links'
+)
+
+
 to_parser = subparsers.add_parser('to', help='Write music links to a location')
 to_subparsers = to_parser.add_subparsers()
+
 
 to_console_parser = to_subparsers.add_parser('console', help='Write links found to stdout')
 to_console_parser.set_defaults(action=to_console)
