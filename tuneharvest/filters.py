@@ -32,6 +32,9 @@ class Masseuse(object):
                 link = link._replace(itemid=qs['v'][0])
             elif parsed_link.path:
                 link = link._replace(itemid=parsed_link.path.split('/')[-1])
+        elif link.itemid and not link.media:
+            link = link._replace(media='https://www.youtube.com/watch?v={}'.format(link.itemid))
+
         return link
 
     def massage_spotify(self, link: Link)-> Link:

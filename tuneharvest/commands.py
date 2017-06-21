@@ -2,8 +2,10 @@ import argparse
 import sys
 
 from tuneharvest.sources.console import from_console
+from tuneharvest.sources.discourse import from_discourse
+from tuneharvest.sources.html import from_html
+from tuneharvest.sources.json import from_json
 from tuneharvest.sources.slack import from_slack
-from tuneharvest.sources.url import from_url
 from tuneharvest.sinks.console import to_console
 from tuneharvest.sinks.youtube import to_youtube
 from tuneharvest.filters import Masseuse
@@ -43,6 +45,32 @@ from_console_parser.add_argument(
 )
 
 
+from_html_parser = from_subparsers.add_parser('html', help='Read links from a url')
+from_html_parser.set_defaults(action=from_html)
+
+from_html_parser.add_argument('url', help='URL of the web page to load')
+from_html_parser.add_argument(
+    '--lazyyt', action='store_true',
+    help='Search for lazyYT youtube links'
+)
+
+
+from_discourse_parser = from_subparsers.add_parser('discourse', help='Read links from discourse')
+from_discourse_parser.set_defaults(action=from_discourse)
+
+from_discourse_parser.add_argument('url', help='URL of discourse topic')
+
+
+from_json_parser = from_subparsers.add_parser('json', help='Read links from JSON')
+from_json_parser.set_defaults(action=from_json)
+
+from_json_parser.add_argument('url', help='URL of the JSON to load')
+from_json_parser.add_argument(
+    '--objectpath', '-O', type=str,
+    help='ObjectPath specifying link location'
+)
+
+
 from_slack_parser = from_subparsers.add_parser('slack', help='Read links based on a slack search')
 from_slack_parser.set_defaults(action=from_slack)
 
@@ -61,16 +89,6 @@ from_slack_parser.add_argument(
 from_slack_parser.add_argument(
     '--limit', '-L', default=None, type=int,
     help='Max number of items to find'
-)
-
-
-from_url_parser = from_subparsers.add_parser('url', help='Read links from a url')
-from_url_parser.set_defaults(action=from_url)
-
-from_url_parser.add_argument('url', help='URL of the web page to load')
-from_url_parser.add_argument(
-    '--lazyyt', action='store_true',
-    help='Search for lazyYT youtube links'
 )
 
 
