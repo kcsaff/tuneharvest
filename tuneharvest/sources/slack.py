@@ -6,6 +6,28 @@ from collections.abc import Callable, Iterable
 from argparse import Namespace
 
 
+def register(subparsers):
+    from_slack_parser = subparsers.add_parser('slack', help='Read links based on a slack search')
+    from_slack_parser.set_defaults(action=from_slack)
+
+    from_slack_parser.add_argument(
+        '--token', '-t', default='keys/token-from-slack.txt',
+        help='Slack API token or filename containing API token'
+    )
+    from_slack_parser.add_argument(
+        '--query', '-q', default='has:link',
+        help='Slack search query'
+    )
+    from_slack_parser.add_argument(
+        '--direction', '-D', default='desc', choices=('asc', 'desc'),
+        help='Slack sort direction'
+    )
+    from_slack_parser.add_argument(
+        '--limit', '-L', default=None, type=int,
+        help='Max number of items to find'
+    )
+
+
 def _lookup(result: dict, path: str, default=None):
     for part in path.split('.'):
         if part in result:

@@ -10,6 +10,13 @@ from argparse import Namespace
 TOPIC_RE = re.compile(r'.+/t/[^\./]+')
 
 
+def register(subparsers):
+    from_discourse_parser = subparsers.add_parser('discourse', help='Read links from discourse')
+    from_discourse_parser.set_defaults(action=from_discourse)
+
+    from_discourse_parser.add_argument('url', help='URL of discourse topic')
+
+
 def _topic_path(path: str, num: int =0):
     return '{}/{}.json'.format(TOPIC_RE.match(path).group(0), num)
 
