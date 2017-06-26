@@ -2,15 +2,9 @@ import argparse
 import pkgutil
 import sys
 
-
+import tuneharvest.sinks
 import tuneharvest.sources
 
-
-from tuneharvest.sources.console import from_console
-from tuneharvest.sources.discourse import from_discourse
-from tuneharvest.sources.slack import from_slack
-from tuneharvest.sinks.console import to_console
-from tuneharvest.sinks.youtube import to_youtube
 from tuneharvest.filters import Masseuse
 
 
