@@ -52,9 +52,20 @@ a browser, or by following
 Command-line usage
 ==================
 
-The command can be invoked as:
+Replace items in {brackets} with your values to execute these commands.
+
+Harvest from a slack channel to a youtube playlist
+--------------------------------------------------
 
 ```
-tuneharvest from slack --token {token.txt} --query "has:link in:my-music-channel" \
-    to youtube --secrets {secrets.txt} --title "My playlist title"
+tuneharvest from slack --token {token.txt} --query "has:link in:{my-music-channel}" \
+    to youtube --secrets {secrets.txt} --title "{My playlist title}"
+```
+
+Harvest from a discourse thread to a youtube playlist
+-----------------------------------------------------
+
+```
+tuneharvest from discourse {https://my.discourse-instance.com/t/my-music-thread} \
+    to youtube --secrets {secrets.txt} --title "{My playlist title}"
 ```
