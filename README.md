@@ -47,7 +47,21 @@ to obtain a refresh token that will either be obtained by user login in
 a browser, or by following
 [these instructions](http://stackoverflow.com/questions/19449061/upload-videos-to-my-youtube-channel-without-user-authentication-using-youtubeapi).
 
- * TODO: this needs fleshed out
+Getting this file is unfortunately a complicate, multi-step process -- foruntately, you only need to do it once per account.
+
+ * Go to [Google's API developer console](https://console.developers.google.com/apis/dashboard?debugUI=DEVELOPERS&authuser=1&pli=1)
+ * Create or select project
+    * Click the dropdown "Select a project ▾"
+    * Select, or, most likely, create a new project -- click the "➕" symbol and follow instructions
+ * Create credentials
+    * Click "Credentials" in the left-hand panel
+    * Click the "Create Credentials ▾" dropdown, and select "Service account key"
+    * Create a new service account using the "JSON" key type
+    * Select service account role (TODO: what is necessary here?)
+ * Enable Youtube API
+    * Click "⊞ Enable API"
+    * Select "Youtube Data API"
+    * Click "▶ Enable"
 
 Command-line usage
 ==================
