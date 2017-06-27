@@ -1,10 +1,10 @@
 import argparse
+import pkgutil
 import sys
 
-from tuneharvest.sources.console import from_console
-from tuneharvest.sources.slack import from_slack
-from tuneharvest.sinks.console import to_console
-from tuneharvest.sinks.youtube import to_youtube
+import tuneharvest.sinks
+import tuneharvest.sources
+
 from tuneharvest.filters import Masseuse
 
 
@@ -15,103 +15,44 @@ except:
     VERSION = 'DEV'
 
 
-parser = argparse.ArgumentParser(
-    description=('Harvests youtube music links from a slack conversation' +
-                 ' for posting in a youtube playlist\n' +
-                 '  Version {}'
-                 ).format(VERSION),
-    formatter_class=argparse.RawDescriptionHelpFormatter
-)
-parser.add_argument(
-    '--version', action='store_true',
-    help='Print version ({}) and exit'.format(VERSION)
-)
-
-subparsers = parser.add_subparsers()
-
-from_parser = subparsers.add_parser('from', help='Read music links from a location')
-from_subparsers = from_parser.add_subparsers()
-
-from_console_parser = from_subparsers.add_parser('console', help='Read links line by line from stdin')
-from_console_parser.set_defaults(action=from_console)
-
-from_console_parser.add_argument(
-    '--format', '-F', default='{media}',
-    help='Format to read from console'
-)
+DEFAULT_SOURCE = 'from console'
+DEFAULT_SINK = 'to console'
 
 
-from_slack_parser = from_subparsers.add_parser('slack', help='Read links based on a slack search')
-from_slack_parser.set_defaults(action=from_slack)
+def make_parser():
+    parser = argparse.ArgumentParser(
+        description=('Harvests youtube music links from a slack conversation' +
+                     ' for posting in a youtube playlist\n' +
+                     '  Version {}'
+                    ).format(VERSION),
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        '--version', action='version', version=VERSION,
+        help='Print version ({}) and exit'.format(VERSION)
+    )
 
-from_slack_parser.add_argument(
-    '--token', '-t', default='keys/token-from-slack.txt',
-    help='Slack API token or filename containing API token'
-)
-from_slack_parser.add_argument(
-    '--query', '-q', default='has:link',
-    help='Slack search query'
-)
-from_slack_parser.add_argument(
-    '--direction', '-D', default='desc', choices=('asc', 'desc'),
-    help='Slack sort direction'
-)
-from_slack_parser.add_argument(
-    '--limit', '-L', default=None, type=int,
-    help='Max number of items to find'
-)
+    subparsers = parser.add_subparsers()
 
+    from_parser = subparsers.add_parser('from', help='Read music links from a location')
+    register_modules(tuneharvest.sources, from_parser.add_subparsers())
 
-to_parser = subparsers.add_parser('to', help='Write music links to a location')
-to_subparsers = to_parser.add_subparsers()
+    to_parser = subparsers.add_parser('to', help='Write music links to a location')
+    register_modules(tuneharvest.sinks, to_parser.add_subparsers())
 
-to_console_parser = to_subparsers.add_parser('console', help='Write links found to stdout')
-to_console_parser.set_defaults(action=to_console)
-
-to_console_parser.add_argument(
-    '--format', '-F', default='{media}',
-    help='Format to write to console'
-)
-to_console_parser.add_argument(
-    '--limit', '-L', default=None, type=int,
-    help='Max items to print'
-)
+    return parser
 
 
-to_youtube_parser = to_subparsers.add_parser('youtube', help='Update a youtube playlist')
-to_youtube_parser.set_defaults(action=to_youtube)
-
-to_youtube_parser.add_argument(
-    '--secrets', '-S', default='keys/secrets-to-youtube.json',
-    help='JSON client secrets file'
-)
-to_youtube_parser.add_argument(
-    '--title', '-T', default=None,
-    help='Title of youtube playlist'
-)
-to_youtube_parser.add_argument(
-    '--id', '-I', default=None,
-    help='Youtube playlist ID to modify'
-)
-to_youtube_parser.add_argument(
-    '--privacy', default='unlisted', choices=('private', 'public', 'unlisted'),
-    help='Privacy setting of new youtube playlist'
-)
-to_youtube_parser.add_argument(
-    '--limit', '-L', default=200, type=int,
-    help='Max number of items in playlist'
-)
-to_youtube_parser.add_argument(
-    '--reverse', action='store_true',
-    help='Whether to reverse link order'
-)
-to_youtube_parser.add_argument(
-    '-v', '--verbose', action='count', default=0,
-    help='Verbosity'
-)
+def register_modules(pkg, subparsers):
+    for loader, name, is_pkg in pkgutil.iter_modules(pkg.__path__):
+        mod = loader.find_module(name).load_module(name)
+        register = getattr(mod, 'register', None)
+        if register:
+            register(subparsers)
 
 
 def main(argv=None):
+    parser = make_parser()
     argv = (argv or sys.argv)[1:]
     commands = list()
 
@@ -123,12 +64,10 @@ def main(argv=None):
     commands.append(sys.argv[prev:])
 
     if not commands[-1]:
+        # Might be --version or --help
         args = parser.parse_args()
-        if args.version:
-            print(VERSION)
-            return
-        else:
-            raise RuntimeError('At least one `from` or `to` command is required.')
+        # Otherwise: truly no commands were given
+        raise RuntimeError('At least one `from` or `to` command is required.')
 
     sources = list()
     sink = None
@@ -141,9 +80,9 @@ def main(argv=None):
             raise RuntimeError('We only support one sink at a time currently')
 
     if not sources:
-        sources.append('from console'.split())
+        sources.append(DEFAULT_SOURCE.split())
     if not sink:
-        sink = 'to console'.split()
+        sink = DEFAULT_SINK.split()
 
     source_args = [parser.parse_args(source) for source in sources]
     sink_args = parser.parse_args(sink)
@@ -155,3 +94,4 @@ def main(argv=None):
 
 if __name__ == '__main__':
     main()
+

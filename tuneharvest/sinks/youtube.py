@@ -25,6 +25,40 @@ PLAYLIST_ITEMS_MAX = 50
 PlaylistItem = namedtuple('PlaylistItem', ('itemid', 'deleteid'))
 
 
+def register(subparsers):
+    to_youtube_parser = subparsers.add_parser('youtube', help='Update a youtube playlist')
+    to_youtube_parser.set_defaults(action=to_youtube)
+
+    to_youtube_parser.add_argument(
+        '--secrets', '-S', default='keys/secrets-to-youtube.json',
+        help='JSON client secrets file'
+    )
+    to_youtube_parser.add_argument(
+        '--title', '-T', default=None,
+        help='Title of youtube playlist'
+    )
+    to_youtube_parser.add_argument(
+        '--id', '-I', default=None,
+        help='Youtube playlist ID to modify'
+    )
+    to_youtube_parser.add_argument(
+        '--privacy', default='unlisted', choices=('private', 'public', 'unlisted'),
+        help='Privacy setting of new youtube playlist'
+    )
+    to_youtube_parser.add_argument(
+        '--limit', '-L', default=200, type=int,
+        help='Max number of items in playlist'
+    )
+    to_youtube_parser.add_argument(
+        '--reverse', action='store_true',
+        help='Whether to reverse link order'
+    )
+    to_youtube_parser.add_argument(
+        '-v', '--verbose', action='count', default=0,
+        help='Verbosity'
+    )
+
+
 def _ignore(*_):
     pass
 
